@@ -5,7 +5,9 @@ function Exercises() {
   const [exercises, setExercises] = useState([]);
 
   useEffect(() => {
-    fetch("http://127.0.0.1:5555/exercises")
+    fetch("http://127.0.0.1:5555/api/exercises", {
+  credentials: "include",
+})
       .then((r) => r.json())
       .then(setExercises);
   }, []);

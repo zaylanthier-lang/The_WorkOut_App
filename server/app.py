@@ -13,11 +13,17 @@ app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///app.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.secret_key = "super-secret-key"
 
-# IMPORTANT FOR AUTH (cookies/session)
-CORS(app, supports_credentials=True)
+# -------------------
+# CORS (FIXED)
+# -------------------
+CORS(
+    app,
+    supports_credentials=True,
+    origins=["http://127.0.0.1:5173", "http://localhost:5173"]
+)
 
 # -------------------
-# INIT DB
+# INIT
 # -------------------
 db.init_app(app)
 migrate.init_app(app, db)
@@ -32,7 +38,6 @@ def home():
 # -------------------
 # AUTH
 # -------------------
-
 @app.post("/api/register")
 def register():
     data = request.get_json()
@@ -48,10 +53,7 @@ def register():
 
     session["user_id"] = user.id
 
-    return {
-        "id": user.id,
-        "username": user.username
-    }, 201
+    return user.to_dict(), 201
 
 
 @app.post("/api/login")
@@ -65,10 +67,7 @@ def login():
 
     session["user_id"] = user.id
 
-    return {
-        "id": user.id,
-        "username": user.username
-    }, 200
+    return user.to_dict(), 200
 
 
 @app.delete("/api/logout")
@@ -77,26 +76,16 @@ def logout():
     return {"message": "Logged out"}, 200
 
 # -------------------
-# EXERCISES (UNCHANGED)
+# EXERCISES
 # -------------------
-
 @app.get("/api/exercises")
 def get_exercises():
     exercises = Exercise.query.all()
-
-    return jsonify([
-        {
-            "id": ex.id,
-            "name": ex.name,
-            "muscle_group": ex.muscle_group
-        }
-        for ex in exercises
-    ])
+    return jsonify([ex.to_dict() for ex in exercises])
 
 # -------------------
-# WORKOUT LOGS (PROTECTED CRUD)
+# WORKOUT LOGS (FIXED)
 # -------------------
-
 @app.get("/api/workout_logs")
 def get_workout_logs():
     user_id = session.get("user_id")
@@ -106,18 +95,7 @@ def get_workout_logs():
 
     logs = WorkoutLog.query.filter_by(user_id=user_id).all()
 
-    return jsonify([
-        {
-            "id": log.id,
-            "exercise_name": log.exercise_name,
-            "weight": log.weight,
-            "reps": log.reps,
-            "sets": log.sets,
-            "date": log.date,
-            "user_id": log.user_id
-        }
-        for log in logs
-    ])
+    return jsonify([log.to_dict() for log in logs])
 
 
 @app.post("/api/workout_logs")
@@ -129,26 +107,23 @@ def create_workout_log():
 
     data = request.get_json()
 
-    log = WorkoutLog(
-        exercise_name=data["exercise_name"],
-        weight=float(data["weight"]),
-        reps=int(data["reps"]),
-        sets=int(data["sets"]),
-        date=data["date"],
-        user_id=user_id
-    )
+    try:
+        log = WorkoutLog(
+            exercise_name=data["exercise_name"],
+            weight=float(data["weight"]),
+            reps=int(data["reps"]),
+            sets=int(data["sets"]),
+            date=data["date"],
+            user_id=user_id
+        )
 
-    db.session.add(log)
-    db.session.commit()
+        db.session.add(log)
+        db.session.commit()
 
-    return {
-        "id": log.id,
-        "exercise_name": log.exercise_name,
-        "weight": log.weight,
-        "reps": log.reps,
-        "sets": log.sets,
-        "date": log.date
-    }, 201
+        return log.to_dict(), 201
+
+    except Exception as e:
+        return {"error": str(e)}, 500
 
 
 @app.delete("/api/workout_logs/<int:id>")
@@ -191,17 +166,20 @@ def update_workout(id):
 
     db.session.commit()
 
-    return {
-        "id": log.id,
-        "exercise_name": log.exercise_name,
-        "weight": log.weight,
-        "reps": log.reps,
-        "sets": log.sets,
-        "date": log.date
-    }, 200
+    return log.to_dict(), 200
 
 # -------------------
-# RUN APP
+# ERROR HANDLER
+# -------------------
+@app.errorhandler(Exception)
+def handle_error(e):
+    return {"error": str(e)}, 500
+
+# -------------------
+# RUN
 # -------------------
 if __name__ == "__main__":
-    app.run(port=5555, debug=True)
+    with app.app_context():
+        db.create_all()
+
+    app.run(debug=True, port=5555)
