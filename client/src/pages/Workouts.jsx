@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import WorkoutCard from "../components/WorkoutCard";
 
 function Workouts() {
   const [logs, setLogs] = useState([]);
@@ -17,13 +18,20 @@ function Workouts() {
       .then((data) => setLogs(data));
   }, []);
 
-  // handle input changes
+  
   function handleChange(e) {
-    setForm({
-      ...form,
-      [e.target.name]: e.target.value,
-    });
-  }
+  setForm({
+    ...form,
+    [e.target.name]: e.target.value,
+  });
+}
+function handleDelete(id) {
+  fetch(`http://127.0.0.1:5555/workout_logs/${id}`, {
+    method: "DELETE",
+  }).then(() => {
+    setLogs(logs.filter((log) => log.id !== id));
+  });
+}
 
   // POST workout (THIS IS THE FIRST ONE YOU WERE ASKING ABOUT)
   function handleSubmit(e) {
@@ -95,19 +103,18 @@ function Workouts() {
         <button type="submit">Add Workout</button>
       </form>
 
-      {/* DISPLAY */}
       <div className="grid">
-        {logs.map((log) => (
-          <div className="card" key={log.id}>
-            <h3>{log.weight} lbs</h3>
-            <p>{log.sets} sets</p>
-            <p>{log.reps} reps</p>
-            <p>{log.date}</p>
-          </div>
-        ))}
+       {logs.map((log) => (
+          <WorkoutCard
+            key={log.id}
+            log={log}
+            onDelete={handleDelete}
+          />
+         ))}
       </div>
     </div>
   );
 }
+
 
 export default Workouts;

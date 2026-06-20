@@ -13,9 +13,9 @@ app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///app.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 # -------------------
-# CORS (FIX FOR YOUR ERROR)
+# CORS
 # -------------------
-CORS(app)  # 👈 THIS FIXES YOUR ERROR
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 # -------------------
 # INIT DB + MIGRATE
@@ -23,14 +23,12 @@ CORS(app)  # 👈 THIS FIXES YOUR ERROR
 db.init_app(app)
 migrate.init_app(app, db)
 
-
 # -------------------
 # HOME
 # -------------------
 @app.get("/")
 def home():
     return {"message": "Workout Tracker API"}
-
 
 # -------------------
 # EXERCISES
@@ -66,7 +64,6 @@ def create_exercise():
         "name": exercise.name,
         "muscle_group": exercise.muscle_group
     }, 201
-
 
 # -------------------
 # USERS
@@ -105,7 +102,6 @@ def create_user():
         "age": user.age,
         "gender": user.gender
     }, 201
-
 
 # -------------------
 # WORKOUT LOGS
@@ -153,6 +149,52 @@ def create_workout_log():
         "user_id": log.user_id,
         "exercise_id": log.exercise_id
     }, 201
+
+
+# -------------------
+# DELETE WORKOUT
+# -------------------
+@app.delete("/workout_logs/<int:id>")
+def delete_workout(id):
+    log = WorkoutLog.query.get(id)
+
+    if not log:
+        return {"error": "Workout not found"}, 404
+
+    db.session.delete(log)
+    db.session.commit()
+
+    return {"message": "Workout deleted"}, 200
+
+
+# -------------------
+# UPDATE WORKOUT
+# -------------------
+@app.patch("/workout_logs/<int:id>")
+def update_workout(id):
+    log = WorkoutLog.query.get(id)
+
+    if not log:
+        return {"error": "Workout not found"}, 404
+
+    data = request.get_json()
+
+    log.weight = data.get("weight", log.weight)
+    log.reps = data.get("reps", log.reps)
+    log.sets = data.get("sets", log.sets)
+    log.date = data.get("date", log.date)
+
+    db.session.commit()
+
+    return {
+        "id": log.id,
+        "weight": log.weight,
+        "reps": log.reps,
+        "sets": log.sets,
+        "date": log.date,
+        "user_id": log.user_id,
+        "exercise_id": log.exercise_id
+    }, 200
 
 
 # -------------------
