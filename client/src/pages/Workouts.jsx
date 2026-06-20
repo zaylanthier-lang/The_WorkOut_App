@@ -11,6 +11,8 @@ function Workouts() {
     date: "",
   });
 
+  const [editingId, setEditingId] = useState(null);
+
   // GET all workouts
   useEffect(() => {
     fetch("http://127.0.0.1:5555/workout_logs")
@@ -18,27 +20,47 @@ function Workouts() {
       .then((data) => setLogs(data));
   }, []);
 
-  
+  // handle input changes
   function handleChange(e) {
-  setForm({
-    ...form,
-    [e.target.name]: e.target.value,
-  });
-}
-function handleDelete(id) {
-  fetch(`http://127.0.0.1:5555/workout_logs/${id}`, {
-    method: "DELETE",
-  }).then(() => {
-    setLogs(logs.filter((log) => log.id !== id));
-  });
-}
+    setForm({
+      ...form,
+      [e.target.name]: e.target.value,
+    });
+  }
 
-  // POST workout (THIS IS THE FIRST ONE YOU WERE ASKING ABOUT)
+  // DELETE workout
+  function handleDelete(id) {
+    fetch(`http://127.0.0.1:5555/workout_logs/${id}`, {
+      method: "DELETE",
+    }).then(() => {
+      setLogs((prev) => prev.filter((log) => log.id !== id));
+    });
+  }
+
+  // EDIT workout (fills form)
+  function handleEdit(log) {
+    setForm({
+      weight: log.weight,
+      sets: log.sets,
+      reps: log.reps,
+      date: log.date,
+    });
+
+    setEditingId(log.id);
+  }
+
+  // CREATE or UPDATE workout
   function handleSubmit(e) {
     e.preventDefault();
 
-    fetch("http://127.0.0.1:5555/workout_logs", {
-      method: "POST",
+    const url = editingId
+      ? `http://127.0.0.1:5555/workout_logs/${editingId}`
+      : "http://127.0.0.1:5555/workout_logs";
+
+    const method = editingId ? "PATCH" : "POST";
+
+    fetch(url, {
+      method,
       headers: {
         "Content-Type": "application/json",
       },
@@ -47,15 +69,21 @@ function handleDelete(id) {
         sets: form.sets,
         reps: form.reps,
         date: form.date,
-
-        // REQUIRED by backend
         user_id: 1,
         exercise_id: 1,
       }),
     })
       .then((r) => r.json())
-      .then((newLog) => {
-        setLogs((prev) => [...prev, newLog]);
+      .then((data) => {
+        if (editingId) {
+          setLogs((prev) =>
+            prev.map((log) =>
+              log.id === editingId ? data : log
+            )
+          );
+        } else {
+          setLogs((prev) => [...prev, data]);
+        }
 
         setForm({
           weight: "",
@@ -63,6 +91,8 @@ function handleDelete(id) {
           reps: "",
           date: "",
         });
+
+        setEditingId(null);
       });
   }
 
@@ -100,21 +130,24 @@ function handleDelete(id) {
           onChange={handleChange}
         />
 
-        <button type="submit">Add Workout</button>
+        <button type="submit">
+          {editingId ? "Update Workout" : "Add Workout"}
+        </button>
       </form>
 
+      {/* CARDS */}
       <div className="grid">
-       {logs.map((log) => (
+        {logs.map((log) => (
           <WorkoutCard
             key={log.id}
             log={log}
             onDelete={handleDelete}
+            onEdit={handleEdit}
           />
-         ))}
+        ))}
       </div>
     </div>
   );
 }
-
 
 export default Workouts;

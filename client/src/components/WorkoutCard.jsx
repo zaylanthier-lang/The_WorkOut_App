@@ -1,4 +1,4 @@
-function WorkoutCard({ log, onDelete }) {
+function WorkoutCard({ log, onDelete, onEdit }) {
   return (
     <div className="card">
       <h3>{log.weight} lbs</h3>
@@ -8,6 +8,10 @@ function WorkoutCard({ log, onDelete }) {
       </p>
 
       <p>{log.date}</p>
+
+      <button onClick={() => onEdit(log)}>
+        Edit
+      </button>
 
       <button onClick={() => onDelete(log.id)}>
         Delete
