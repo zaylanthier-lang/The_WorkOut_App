@@ -1,21 +1,14 @@
 function WorkoutCard({ log, onDelete, onEdit }) {
   return (
     <div className="card">
-      <h3>{log.weight} lbs</h3>
+      <h3>{log.exercise_name}</h3>
 
-      <p>
-        {log.sets} sets × {log.reps} reps
-      </p>
-
+      <p>{log.weight} lbs</p>
+      <p>{log.sets} sets × {log.reps} reps</p>
       <p>{log.date}</p>
 
-      <button onClick={() => onEdit(log)}>
-        Edit
-      </button>
-
-      <button onClick={() => onDelete(log.id)}>
-        Delete
-      </button>
+      <button onClick={() => onEdit(log)}>Edit</button>
+      <button onClick={() => onDelete(log.id)}>Delete</button>
     </div>
   );
 }

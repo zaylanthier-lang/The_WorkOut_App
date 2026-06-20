@@ -104,7 +104,7 @@ def create_user():
     }, 201
 
 # -------------------
-# WORKOUT LOGS
+# WORKOUT LOGS (FULL CRUD)
 # -------------------
 @app.get("/workout_logs")
 def get_workout_logs():
@@ -113,6 +113,7 @@ def get_workout_logs():
     return jsonify([
         {
             "id": log.id,
+            "exercise_name": log.exercise_name,
             "weight": log.weight,
             "reps": log.reps,
             "sets": log.sets,
@@ -129,6 +130,7 @@ def create_workout_log():
     data = request.get_json()
 
     log = WorkoutLog(
+        exercise_name=data["exercise_name"],
         weight=float(data["weight"]),
         reps=int(data["reps"]),
         sets=int(data["sets"]),
@@ -142,6 +144,7 @@ def create_workout_log():
 
     return {
         "id": log.id,
+        "exercise_name": log.exercise_name,
         "weight": log.weight,
         "reps": log.reps,
         "sets": log.sets,
@@ -151,9 +154,6 @@ def create_workout_log():
     }, 201
 
 
-# -------------------
-# DELETE WORKOUT
-# -------------------
 @app.delete("/workout_logs/<int:id>")
 def delete_workout(id):
     log = WorkoutLog.query.get(id)
@@ -167,9 +167,6 @@ def delete_workout(id):
     return {"message": "Workout deleted"}, 200
 
 
-# -------------------
-# UPDATE WORKOUT
-# -------------------
 @app.patch("/workout_logs/<int:id>")
 def update_workout(id):
     log = WorkoutLog.query.get(id)
@@ -179,6 +176,7 @@ def update_workout(id):
 
     data = request.get_json()
 
+    log.exercise_name = data.get("exercise_name", log.exercise_name)
     log.weight = data.get("weight", log.weight)
     log.reps = data.get("reps", log.reps)
     log.sets = data.get("sets", log.sets)
@@ -188,6 +186,7 @@ def update_workout(id):
 
     return {
         "id": log.id,
+        "exercise_name": log.exercise_name,
         "weight": log.weight,
         "reps": log.reps,
         "sets": log.sets,
@@ -195,7 +194,6 @@ def update_workout(id):
         "user_id": log.user_id,
         "exercise_id": log.exercise_id
     }, 200
-
 
 # -------------------
 # RUN APP

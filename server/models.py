@@ -40,7 +40,8 @@ class WorkoutLog(db.Model):
     __tablename__ = "workout_logs"
 
     id = db.Column(db.Integer, primary_key=True)
-
+    
+    exercise_name = db.Column(db.String, nullable=False)
     weight = db.Column(db.Float, nullable=False)
     reps = db.Column(db.Integer, nullable=False)
     sets = db.Column(db.Integer, nullable=False)
